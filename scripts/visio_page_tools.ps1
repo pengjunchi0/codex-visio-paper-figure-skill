@@ -4,6 +4,12 @@ param(
 
     [string]$PreviewPath,
 
+    [string[]]$ExportFormats,
+
+    [string]$OutputDir,
+    [string]$OutputBaseName,
+    [int]$PageIndex = 1,
+
     [switch]$Backup,
     [switch]$ExportPreview,
     [switch]$InspectPackage,
@@ -11,6 +17,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'visio_export_formats.ps1')
 
 function Close-VisioDocument([string]$path) {
     try {
@@ -18,7 +25,7 @@ function Close-VisioDocument([string]$path) {
         for ($i = $visio.Documents.Count; $i -ge 1; $i--) {
             $doc = $visio.Documents.Item($i)
             if ([string]::Equals($doc.FullName, $path, [StringComparison]::OrdinalIgnoreCase)) {
-                $doc.Save()
+                $doc.Save() | Out-Null
                 $doc.Close()
                 Write-Output "Closed open Visio document: $path"
             }
@@ -39,20 +46,6 @@ function Backup-Vsdx([string]$path) {
     $backupPath = Join-Path $dir "$stem.backup-$stamp.vsdx"
     Copy-Item -LiteralPath $path -Destination $backupPath
     Write-Output "Backup: $backupPath"
-}
-
-function Export-VisioPreview([string]$path, [string]$outPath) {
-    if (-not $outPath) {
-        $outPath = [IO.Path]::ChangeExtension($path, '.preview.png')
-    }
-    $visio = New-Object -ComObject Visio.Application
-    $visio.Visible = $true
-    $doc = $visio.Documents.Open($path)
-    $page = $doc.Pages.Item(1)
-    $page.Export($outPath)
-    $doc.Close()
-    $visio.Quit()
-    Write-Output "Preview: $outPath"
 }
 
 function Inspect-VsdxPackage([string]$path) {
@@ -89,4 +82,24 @@ function Inspect-VsdxPackage([string]$path) {
 if ($CloseOpenDocument) { Close-VisioDocument $VsdxPath }
 if ($Backup) { Backup-Vsdx $VsdxPath }
 if ($InspectPackage) { Inspect-VsdxPackage $VsdxPath }
-if ($ExportPreview) { Export-VisioPreview $VsdxPath $PreviewPath }
+
+$formatsToExport = New-Object System.Collections.Generic.List[string]
+if ($ExportPreview -and -not $formatsToExport.Contains('png')) {
+    $formatsToExport.Add('png') | Out-Null
+}
+foreach ($format in @($ExportFormats)) {
+    if ($format -and -not $formatsToExport.Contains($format.ToLowerInvariant())) {
+        $formatsToExport.Add($format.ToLowerInvariant()) | Out-Null
+    }
+}
+
+if ($formatsToExport.Count -gt 0) {
+    Export-VisioDocumentFormats `
+        -VsdxPath $VsdxPath `
+        -Formats @($formatsToExport) `
+        -OutputDir $OutputDir `
+        -OutputBaseName $OutputBaseName `
+        -PageIndex $PageIndex `
+        -PreviewPath $PreviewPath `
+        -Visible
+}

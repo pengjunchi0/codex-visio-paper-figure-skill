@@ -7,10 +7,16 @@ param(
     [double]$RefW = 1448.0,
     [double]$RefH = 1086.0,
 
-    [string]$PreviewPath
+    [string]$PreviewPath,
+
+    [string[]]$ExportFormats,
+
+    [string]$OutputDir,
+    [string]$OutputBaseName
 )
 
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'visio_export_formats.ps1')
 
 function VX([double]$x) { $script:PageW * $x / $script:RefW }
 function VY([double]$y) { $script:PageH - ($script:PageH * $y / $script:RefH) }
@@ -111,6 +117,10 @@ function Draw-ReferenceFigure {
     RectTL 260 60 220 220 'Block 1' $C.White $C.Blue 10 $true 1.0 1 8 | Out-Null
     RectTL 290 115 160 35 'Module A' $C.PurpleSoft $C.Purple 11 $true 0.8 1 5 | Out-Null
     LineTL 200 170 260 170 $C.Black 1.0 $true | Out-Null
+    LineTL 480 170 570 170 $C.Black 1.0 $true | Out-Null
+    RectTL 570 90 250 160 'Processing' $C.GreenSoft $C.Green 11 $true 1.0 1 8 | Out-Null
+    LineTL 820 170 880 170 $C.Black 1.0 $true | Out-Null
+    RectTL 880 90 240 160 'Output' $C.OrangeSoft $C.Orange 11 $true 1.0 1 8 | Out-Null
     TextTL 600 20 360 28 'Repeated Processing Stage' 13 $C.Blue $true | Out-Null
 }
 
@@ -118,28 +128,54 @@ $backup = Join-Path (Split-Path -Parent $VsdxPath) (([IO.Path]::GetFileNameWitho
 Copy-Item -LiteralPath $VsdxPath -Destination $backup
 Write-Output "Backup: $backup"
 
-$visio = New-Object -ComObject Visio.Application
-$visio.Visible = $true
-$doc = $visio.Documents.Open($VsdxPath)
-$script:Page = $doc.Pages.Item(1)
-$script:PageW = $PageW
-$script:PageH = $PageH
-$script:RefW = $RefW
-$script:RefH = $RefH
+$visio = $null
+$doc = $null
+try {
+    $visio = New-Object -ComObject Visio.Application
+    $visio.Visible = $true
+    $doc = $visio.Documents.Open($VsdxPath)
+    $script:Page = $doc.Pages.Item(1)
+    $script:PageW = $PageW
+    $script:PageH = $PageH
+    $script:RefW = $RefW
+    $script:RefH = $RefH
 
-$script:Page.PageSheet.CellsU('PageWidth').FormulaU = "$PageW in"
-$script:Page.PageSheet.CellsU('PageHeight').FormulaU = "$PageH in"
-while ($script:Page.Shapes.Count -gt 0) {
-    $script:Page.Shapes.Item(1).Delete()
+    $script:Page.PageSheet.CellsU('PageWidth').FormulaU = "$PageW in"
+    $script:Page.PageSheet.CellsU('PageHeight').FormulaU = "$PageH in"
+    while ($script:Page.Shapes.Count -gt 0) {
+        $script:Page.Shapes.Item(1).Delete() | Out-Null
+    }
+
+    Draw-ReferenceFigure
+
+    $doc.Save() | Out-Null
+
+    $formatsToExport = New-Object System.Collections.Generic.List[string]
+    if ($PreviewPath -and -not $formatsToExport.Contains('png')) {
+        $formatsToExport.Add('png') | Out-Null
+    }
+    foreach ($format in @($ExportFormats)) {
+        if ($format -and -not $formatsToExport.Contains($format.ToLowerInvariant())) {
+            $formatsToExport.Add($format.ToLowerInvariant()) | Out-Null
+        }
+    }
+    if ($formatsToExport.Count -gt 0) {
+        Export-VisioPageFormats `
+            -Document $doc `
+            -Page $script:Page `
+            -SourcePath $VsdxPath `
+            -Formats @($formatsToExport) `
+            -OutputDir $OutputDir `
+            -OutputBaseName $OutputBaseName `
+            -PreviewPath $PreviewPath
+    }
+
+    Write-Output "Saved: $VsdxPath"
+} finally {
+    if ($doc -ne $null) {
+        try { $doc.Close() } catch {}
+    }
+    if ($visio -ne $null) {
+        try { $visio.Quit() } catch {}
+    }
 }
-
-Draw-ReferenceFigure
-
-$doc.Save()
-if ($PreviewPath) {
-    $script:Page.Export($PreviewPath)
-    Write-Output "Preview: $PreviewPath"
-}
-$doc.Close()
-$visio.Quit()
-Write-Output "Saved: $VsdxPath"

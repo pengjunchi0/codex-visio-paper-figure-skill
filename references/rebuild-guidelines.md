@@ -2,7 +2,7 @@
 
 Use this reference when reconstructing a scientific, technical, or academic diagram from a PNG/JPG/screenshot into editable Microsoft Visio `.vsdx` content.
 
-The goal is visual and semantic equivalence using native Visio shapes, text, connectors, groups, and styles. Do not treat any example below as a fixed domain template.
+The goal is visual and semantic equivalence using native Visio shapes, text, connectors, groups, and styles. Do not treat any example below as a fixed domain template. Use `.vsdx` as the editable source, then export SVG/PDF/PPTX deliverables from that source.
 
 ## Reference Analysis
 
@@ -15,6 +15,7 @@ Capture these properties before drawing:
 - Connector semantics: solid arrows, dashed arrows, inhibition lines, braces, loops, feedback paths, summation nodes.
 - Repeated motifs: stacked frames, process blocks, neural-network layers, tables, graphs, charts, heatmaps, timelines, molecule-like nodes, icons.
 - Style tokens: font family, font size bands, accent colors, fill opacity, line weights, corner radii, dash patterns.
+- Output needs: `.vsdx` editability, SVG vector handoff, PDF review/print, PPTX slide handoff.
 - Editability risks: tiny text, dense textures, screenshots embedded inside shapes, equations, image-like scientific data.
 
 ## Panel Inventory Template
@@ -30,6 +31,7 @@ Panel C: title, accent color, role, main internal objects, incoming/outgoing arr
 Shared elements: legends, captions, separators, equations, repeated labels.
 Critical text: labels that must be preserved exactly.
 Approximation targets: dense details that can be represented by native simplified motifs.
+Output formats: vsdx plus png/svg/pdf/pptx as requested.
 ```
 
 This inventory is the contract for the drawing script. If an item is not in the inventory, it is likely to be omitted or drawn inconsistently.
@@ -76,6 +78,15 @@ Draw from top-left bounds as `RectTL(x, y, w, h)` so the script remains readable
 - If the reference contains many tiny repeated elements, create 2-3 reusable helper functions rather than hand placing each occurrence.
 - Do not force a previous project's palette, module names, or layout onto a new reference.
 
+## Output Format Strategy
+
+- Keep `.vsdx` as the editable master and export all other formats from the saved Visio page.
+- Use PNG as a fast visual preview and for compatibility checks.
+- Use SVG when the user needs vector graphics for manuscripts, web pages, or post-processing in vector tools.
+- Use PDF for review, print, or submission preview. Export from the Visio document after save.
+- Use PPTX for presentation handoff. Prefer a PowerPoint slide containing a full-slide SVG render of the Visio page; report that this is a slide render, not guaranteed native PowerPoint shape decomposition.
+- Do not regenerate separate drawings per format. Differences between formats should come from export behavior, not divergent source artwork.
+
 ## Scientific Figure Style Tokens
 
 Use these defaults unless the reference clearly differs:
@@ -97,7 +108,7 @@ Use these defaults unless the reference clearly differs:
 4. Text-bearing process boxes.
 5. Repeated motifs: stacks, cubes, graphs, heatmaps, mini charts, tables, icons.
 6. Equations, legends, axis labels, small annotations.
-7. Grouping, font normalization, preview export, package inspection.
+7. Grouping, font normalization, preview export, package inspection, requested SVG/PDF/PPTX export.
 
 Do not optimize small graphics before the panel grid and arrows are correct.
 
@@ -112,6 +123,7 @@ Do not optimize small graphics before the panel grid and arrows are correct.
 - Letting text overflow boxes after changing fonts.
 - Losing semantic editability by converting equations, graph nodes, tables, or charts into pasted crops.
 - Making all modules the same palette when the reference uses color to distinguish submodules.
+- Exporting SVG/PDF/PPTX from a stale file before saving the final `.vsdx`.
 
 ## Verification Rubric
 
@@ -121,6 +133,7 @@ Score the result before delivery:
 - Semantics: every named module, caption, and important label exists as editable text.
 - Style: colors, line weights, typography, and spacing are consistent.
 - Editability: no full-page image; major objects are native shapes.
+- Outputs: requested PNG/SVG/PDF/PPTX files exist, are non-empty, and were exported from the same saved `.vsdx`.
 - Robustness: target file has a backup; preview or package checks are recorded.
 
 If any category is weak, either fix it or state the limitation explicitly.
@@ -132,5 +145,6 @@ Final response should include:
 - Target `.vsdx` path.
 - Backup path.
 - Preview path if exported.
-- Whether the file is native editable Visio shapes.
-- Any caveats: unreadable labels, skipped verification, or Visio automation issues.
+- SVG/PDF/PPTX paths if requested.
+- Whether the `.vsdx` file is native editable Visio shapes.
+- Any caveats: unreadable labels, skipped verification, PPTX render limitations, or Visio automation issues.
