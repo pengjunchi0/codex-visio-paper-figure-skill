@@ -1,4 +1,4 @@
 interface:
   display_name: "Codex 科研论文绘图 Skill"
-  short_description: "把参考图或生成图重建为可编辑 Visio 图，并导出 SVG、PDF、PPTX 等交付格式。"
-  default_prompt: "使用这个 skill 将参考图片、截图或生成图还原为可编辑的 Visio .vsdx 科研论文配图，避免整图嵌入，并按需导出 PNG、SVG、PDF 或 PPTX。"
+  short_description: "把参考图重建为可编辑 Visio 图，支持面板标定和 SVG、PDF、PPTX 导出。"
+  default_prompt: "使用这个 skill 将参考图片、截图或生成图还原为可编辑的 Visio .vsdx 科研论文配图，避免整图嵌入；复杂多面板图请先标定面板边界以避免移位和重叠，并按需导出 PNG、SVG、PDF 或 PPTX。"

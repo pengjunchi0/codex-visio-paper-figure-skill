@@ -110,12 +110,53 @@ function DotTL([double]$cx, [double]$cy, [double]$r, [string]$fill, [string]$lin
     return OvalTL ($cx - $r) ($cy - $r) (2 * $r) (2 * $r) '' $fill $line 6 $false 0.4
 }
 
+function Assert-RelBox([double]$u, [double]$v, [double]$uw, [double]$vh, [string]$label = 'relative box') {
+    if ($u -lt 0 -or $v -lt 0 -or $uw -lt 0 -or $vh -lt 0 -or ($u + $uw) -gt 1 -or ($v + $vh) -gt 1) {
+        throw "$label is outside calibrated panel bounds. Use 0-1 local coordinates or enlarge the parent panel."
+    }
+}
+
+function Assert-RelPoint([double]$u, [double]$v, [string]$label = 'relative point') {
+    if ($u -lt 0 -or $v -lt 0 -or $u -gt 1 -or $v -gt 1) {
+        throw "$label is outside calibrated panel bounds. Use 0-1 local coordinates or enlarge the parent panel."
+    }
+}
+
+function RX([double]$x0, [double]$w0, [double]$u) { $x0 + $w0 * $u }
+function RY([double]$y0, [double]$h0, [double]$v) { $y0 + $h0 * $v }
+
+function RectRel([double]$x0, [double]$y0, [double]$w0, [double]$h0, [double]$u, [double]$v, [double]$uw, [double]$vh, [string]$text = '', [string]$fill = 'none', [string]$line = $C.Black, [double]$size = 10, [bool]$bold = $false, [double]$linePt = 0.8, [int]$dash = 1, [double]$roundPx = 6) {
+    Assert-RelBox $u $v $uw $vh $text
+    return RectTL (RX $x0 $w0 $u) (RY $y0 $h0 $v) ($w0 * $uw) ($h0 * $vh) $text $fill $line $size $bold $linePt $dash $roundPx
+}
+
+function TextRel([double]$x0, [double]$y0, [double]$w0, [double]$h0, [double]$u, [double]$v, [double]$uw, [double]$vh, [string]$text, [double]$size = 10, [string]$color = $C.Black, [bool]$bold = $false, [bool]$italic = $false, [int]$align = 1) {
+    Assert-RelBox $u $v $uw $vh $text
+    return TextTL (RX $x0 $w0 $u) (RY $y0 $h0 $v) ($w0 * $uw) ($h0 * $vh) $text $size $color $bold $italic $align
+}
+
+function OvalRel([double]$x0, [double]$y0, [double]$w0, [double]$h0, [double]$u, [double]$v, [double]$uw, [double]$vh, [string]$text = '', [string]$fill = $C.White, [string]$line = $C.Black, [double]$size = 8, [bool]$bold = $false, [double]$linePt = 0.8) {
+    Assert-RelBox $u $v $uw $vh $text
+    return OvalTL (RX $x0 $w0 $u) (RY $y0 $h0 $v) ($w0 * $uw) ($h0 * $vh) $text $fill $line $size $bold $linePt
+}
+
+function LineRel([double]$x0, [double]$y0, [double]$w0, [double]$h0, [double]$u1, [double]$v1, [double]$u2, [double]$v2, [string]$color = $C.Black, [double]$linePt = 0.8, [bool]$arrowEnd = $false, [bool]$arrowBegin = $false, [int]$dash = 1) {
+    Assert-RelPoint $u1 $v1 'line start'
+    Assert-RelPoint $u2 $v2 'line end'
+    return LineTL (RX $x0 $w0 $u1) (RY $y0 $h0 $v1) (RX $x0 $w0 $u2) (RY $y0 $h0 $v2) $color $linePt $arrowEnd $arrowBegin $dash
+}
+
 function Draw-ReferenceFigure {
     # Replace this with the task-specific drawing code.
     # Keep the order: panels -> main flow -> text boxes -> repeated motifs -> annotations.
+    # For complex panels, calibrate the panel bounds and draw internals with RectRel/TextRel/LineRel.
     RectTL 20 60 180 220 'Input Sequence' $C.BlueSoft $C.Blue 11 $true 1.0 1 8 | Out-Null
-    RectTL 260 60 220 220 'Block 1' $C.White $C.Blue 10 $true 1.0 1 8 | Out-Null
-    RectTL 290 115 160 35 'Module A' $C.PurpleSoft $C.Purple 11 $true 0.8 1 5 | Out-Null
+    $panelX = 260.0
+    $panelY = 60.0
+    $panelW = 220.0
+    $panelH = 220.0
+    RectTL $panelX $panelY $panelW $panelH 'Block 1' $C.White $C.Blue 10 $true 1.0 1 8 | Out-Null
+    RectRel $panelX $panelY $panelW $panelH 0.14 0.25 0.72 0.16 'Module A' $C.PurpleSoft $C.Purple 11 $true 0.8 1 5 | Out-Null
     LineTL 200 170 260 170 $C.Black 1.0 $true | Out-Null
     LineTL 480 170 570 170 $C.Black 1.0 $true | Out-Null
     RectTL 570 90 250 160 'Processing' $C.GreenSoft $C.Green 11 $true 1.0 1 8 | Out-Null

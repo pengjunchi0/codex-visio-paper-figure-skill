@@ -1,6 +1,6 @@
 # Codex 科研论文绘图 Skill
 
-当前版本：`v1.1`
+当前版本：`v1.1.1`
 
 `Codex 科研论文绘图 Skill` 是一个面向科研论文配图工作流的 Codex Skill。它用于把参考图片、截图或生成图还原为 **Microsoft Visio `.vsdx` 原生可编辑图形**，并从同一个 Visio 源文件导出 PNG、SVG、PDF、PPTX 等交付格式。
 
@@ -17,6 +17,7 @@
 - 检查 `.vsdx` 是否误用了整张参考图嵌入。
 - 给 Visio 图统一论文风格字体、配色和线条规范。
 - 从保存后的 `.vsdx` 导出 SVG、PDF、PPTX 或 PNG。
+- 对复杂多面板图先做面板四角/边界标定，减少子模块移位、串区和重叠。
 
 不适合：
 
@@ -60,7 +61,7 @@
 - `references/rebuild-guidelines.md`：复杂科学图还原准则，包括面板拆解、绘图顺序、样式参数、导出策略和验证 rubric。
 - `scripts/visio_export_formats.ps1`：可复用导出函数，支持 PNG、SVG、PDF、PPTX。
 - `scripts/visio_page_tools.ps1`：辅助检查脚本，用于备份、导出、检查 `.vsdx` 包结构。
-- `scripts/visio_rebuild_scaffold.ps1`：Visio 原生绘图脚手架，用于快速编写一比一重建脚本。
+- `scripts/visio_rebuild_scaffold.ps1`：Visio 原生绘图脚手架，用于快速编写一比一重建脚本，并内置全局坐标和面板局部坐标 helper。
 
 ## 环境要求
 
@@ -109,6 +110,26 @@ git clone https://github.com/pengjunchi0/codex-visio-paper-figure-skill.git "$en
 检查这个 .vsdx 是否只是嵌入了整张 PNG，如果是，请改成原生 Visio 形状重建，再导出 SVG。
 ```
 
+## 面板标定与防重叠
+
+v1.1.1 增加了面向复杂多面板图的坐标约束建议和脚手架 helper。推荐流程是：
+
+1. 先标定整张参考图尺寸和 Visio 页面尺寸。
+2. 再标定每个主要 panel 的左上角、宽高，必要时记录四角点。
+3. panel 内部元素使用 0-1 局部坐标绘制，而不是直接手写全图坐标。
+4. 导出预览后检查子模块是否越出父 panel、相邻 panel 是否重叠、箭头和文字是否穿过无关模块。
+
+`visio_rebuild_scaffold.ps1` 中已提供：
+
+- `RectRel`
+- `TextRel`
+- `OvalRel`
+- `LineRel`
+- `Assert-RelBox`
+- `Assert-RelPoint`
+
+这些 helper 会把局部坐标映射回全局参考坐标，并在局部元素越出 panel 边界时直接报错，避免复杂图后半部分出现整体移位或重叠。
+
 ## 多格式导出
 
 导出已有 `.vsdx`：
@@ -145,10 +166,19 @@ powershell -ExecutionPolicy Bypass -File scripts\visio_rebuild_scaffold.ps1 `
 - 图形对象可单独选中和修改。
 - 没有整张参考图作为最终底图。
 - 配色、字体和线条风格统一。
+- 复杂多面板图的内部元素不应明显移位、跨 panel 串区或互相重叠。
 - 有原文件备份。
 - 请求的 PNG/SVG/PDF/PPTX 从同一个保存后的 `.vsdx` 导出，并且文件非空。
 
 ## Version History
+
+### v1.1.1 - Panel calibration and anti-overlap
+
+- 在 `SKILL.md` 中加入复杂多面板图的面板标定流程。
+- 在 `references/rebuild-guidelines.md` 中新增 panel-local 坐标、四角标定和防重叠检查准则。
+- 在 `visio_rebuild_scaffold.ps1` 中新增 `RectRel`、`TextRel`、`OvalRel`、`LineRel` 等局部坐标 helper。
+- 新增 `Assert-RelBox` 和 `Assert-RelPoint`，当局部元素越出父 panel 边界时提前报错。
+- 更新 `agents/openai.yaml` 和 README，说明 v1.1.1 的防移位、防重叠能力。
 
 ### v1.1 - Multi-format outputs
 

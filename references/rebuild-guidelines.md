@@ -28,6 +28,7 @@ Global structure: top band / bottom band / left workflow / right modules / multi
 Panel A: title, accent color, role, main internal objects, incoming/outgoing arrows.
 Panel B: title, accent color, role, main internal objects, incoming/outgoing arrows.
 Panel C: title, accent color, role, main internal objects, incoming/outgoing arrows.
+Panel bounds: approximate top-left x/y/w/h or four corner points for every major panel.
 Shared elements: legends, captions, separators, equations, repeated labels.
 Critical text: labels that must be preserved exactly.
 Approximation targets: dense details that can be represented by native simplified motifs.
@@ -66,10 +67,37 @@ function VY([double]$y) { $PageH - ($PageH * $y / $RefH) }
 
 Draw from top-left bounds as `RectTL(x, y, w, h)` so the script remains readable against screenshots.
 
+## Panel Calibration and Anti-Overlap
+
+For dense multi-panel figures, do not draw every object directly in the global page coordinate system. Calibrate in two levels:
+
+1. Calibrate the full canvas from the reference image size to the Visio page size.
+2. Calibrate each major panel from its top-left bounds or four detected corner points.
+
+Draw the internals of each panel in local normalized coordinates:
+
+```powershell
+function RX([double]$x0, [double]$w0, [double]$u) { $x0 + $w0 * $u }
+function RY([double]$y0, [double]$h0, [double]$v) { $y0 + $h0 * $v }
+
+# u/v are 0-1 local panel coordinates.
+RectRel $panelX $panelY $panelW $panelH 0.10 0.20 0.35 0.12 'Module'
+```
+
+Use four corner points and a perspective or affine mapping only when the reference is skewed, photographed, or cropped at an angle. For screenshots and exported PDFs, top-left bounds are usually enough.
+
+Before delivery, inspect the preview for:
+
+- child shapes crossing outside the parent panel;
+- panel bounding boxes colliding with adjacent panels;
+- arrows or labels running through unrelated modules;
+- lower rows drifting into the next panel after font changes or export.
+
 ## Visual Matching Heuristics
 
 - Match structure before decoration. Panel placement, reading order, and flow arrows matter more than texture detail.
 - Preserve semantic grouping. Containers, modules, legends, charts, and subgraphs should be separate editable groups.
+- Use local panel coordinates for nested diagrams so internal edits cannot drift into neighboring panels.
 - Preserve scientific labels exactly when legible. If text is unreadable, use a close placeholder and report the limitation.
 - Use simplified native motifs for dense image-like content: stacked rounded rectangles, small dots, mini heatmaps, line charts, bar charts, tables, and graph nodes.
 - Keep equations editable as text when practical. Use plain text approximations if Visio equation objects are unavailable.
@@ -104,11 +132,12 @@ Use these defaults unless the reference clearly differs:
 
 1. Page size and canvas background.
 2. Major bands, panel boxes, captions, and separators.
-3. Main dataflow arrows and module containers.
-4. Text-bearing process boxes.
-5. Repeated motifs: stacks, cubes, graphs, heatmaps, mini charts, tables, icons.
-6. Equations, legends, axis labels, small annotations.
-7. Grouping, font normalization, preview export, package inspection, requested SVG/PDF/PPTX export.
+3. Panel calibration: record bounds for every major panel and subpanel.
+4. Main dataflow arrows and module containers.
+5. Text-bearing process boxes in panel-local coordinates.
+6. Repeated motifs: stacks, cubes, graphs, heatmaps, mini charts, tables, icons.
+7. Equations, legends, axis labels, small annotations.
+8. Grouping, font normalization, overlap check, preview export, package inspection, requested SVG/PDF/PPTX export.
 
 Do not optimize small graphics before the panel grid and arrows are correct.
 
@@ -121,6 +150,7 @@ Do not optimize small graphics before the panel grid and arrows are correct.
 - Leaving Visio locked in the background after a timeout.
 - Claiming success after a script times out without checking file timestamp or package contents.
 - Letting text overflow boxes after changing fonts.
+- Drawing all nested panel internals in global coordinates, which can create shifted rows and cross-panel overlap.
 - Losing semantic editability by converting equations, graph nodes, tables, or charts into pasted crops.
 - Making all modules the same palette when the reference uses color to distinguish submodules.
 - Exporting SVG/PDF/PPTX from a stale file before saving the final `.vsdx`.
@@ -132,6 +162,7 @@ Score the result before delivery:
 - Structure: panel locations and flow match the reference.
 - Semantics: every named module, caption, and important label exists as editable text.
 - Style: colors, line weights, typography, and spacing are consistent.
+- Layout: major panels and their children stay within calibrated bounds without visible overlap.
 - Editability: no full-page image; major objects are native shapes.
 - Outputs: requested PNG/SVG/PDF/PPTX files exist, are non-empty, and were exported from the same saved `.vsdx`.
 - Robustness: target file has a backup; preview or package checks are recorded.
