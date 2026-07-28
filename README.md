@@ -205,3 +205,7 @@ powershell -ExecutionPolicy Bypass -File scripts\visio_rebuild_scaffold.ps1 `
 - 增加更多可复用 motif helper，例如 `DrawCube`、`DrawHeatmap`、`DrawGraph`、`DrawStackedSequence`、`DrawMiniChart`。
 - 增加参考图尺寸读取脚本。
 - 增加 shape inventory 导出脚本，用于分析已有 `.vsdx` 的文本、颜色、位置和分组。
+
+## 开源许可证
+
+本项目采用 [MIT License](LICENSE) 开源。
