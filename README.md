@@ -1,15 +1,15 @@
-# Codex 科研论文绘图 Skill
+# 科研论文绘图 Skill
 
 当前版本：`v1.1.1`
 
-`Codex 科研论文绘图 Skill` 是一个面向科研论文配图工作流的 Codex Skill。它用于把参考图片、截图或生成图还原为 **Microsoft Visio `.vsdx` 原生可编辑图形**，并从同一个 Visio 源文件导出 PNG、SVG、PDF、PPTX 等交付格式。
+`科研论文绘图 Skill` 是一个面向科研论文配图工作流的 Codex Skill。它用于把参考图片、截图或生成图还原为 **Microsoft Visio `.vsdx` 原生可编辑图形**，并从同一个 Visio 源文件导出 PNG、SVG、PDF、PPTX 等交付格式。
 
 核心目标是让 Codex 通过 Visio 原生形状、文本、连线、分组和样式重建论文配图、模型框架图、流程图和多面板科学图。
 
 ## 注意！
 主要适用于模型图、架构图、流程图等。其余场景如指标图（或含真实数据结果的）最好使用脚本或让 Agent 提取数据后用脚本绘图。
 
-当前接入Visio COM，由于作者仅使用该绘图软件，故暂没有推广到其余绘图App。因此使用Drawio等的朋友，请修改对应接口适配自己的Agent。欢迎contribute！
+当前接入Visio COM，由于作者仅使用该绘图软件，暂没有推广到其余绘图App。因此使用Drawio等的朋友，请修改对应接口、且适配自己的Agent。
 
 
 ## 适用场景
